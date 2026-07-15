@@ -25,6 +25,7 @@ target/
 .idea/
 HELP.md
 target/
+uploads/
 
 
 ### IntelliJ IDEA ###
