@@ -5,6 +5,7 @@ import com.phegon.phegonbank.auth_users.dtos.UserDTO;
 import com.phegon.phegonbank.auth_users.entity.User;
 import com.phegon.phegonbank.auth_users.repo.UserRepo;
 import com.phegon.phegonbank.auth_users.services.UserService;
+import com.phegon.phegonbank.aws.S3Service;
 import com.phegon.phegonbank.exceptions.BadRequestException;
 import com.phegon.phegonbank.exceptions.NotFoundException;
 import com.phegon.phegonbank.notification.dtos.NotificationDTO;
@@ -39,8 +40,15 @@ public class UserServiceImpl implements UserService {
     private final NotificationService notificationService;
     private final PasswordEncoder passwordEncoder;
     private final ModelMapper modelMapper;
+    private final S3Service s3Service;
 
-    private final String uploadDir = "uploads/profie-pictures/";
+    //this will save images to the backend root folder
+//    private final String uploadDir = "uploads/profie-pictures/";
+
+
+    //this will save image to the frontend public folder for easy access in the frontend
+    private final String uploadDir = "/d/phegonDev/phegon-bank-react/publicprofile-picture";
+
 
     @Override
     public User getCurrentLoggedInUser() {
@@ -148,7 +156,8 @@ public class UserServiceImpl implements UserService {
 
             Files.copy(file.getInputStream(), filPath);
 
-            String fileUrl = uploadDir + newFileName;
+//   String fileUrl = uploadDir + newFileName; // this is for backend
+            String fileUrl = "profile-picture/" + newFileName;  // this is the relative path from the frontend
 
             user.setProfilePictureUrl(fileUrl);
             userRepo.save(user);
@@ -162,6 +171,32 @@ public class UserServiceImpl implements UserService {
         } catch (IOException e) {
             throw new RuntimeException(e.getMessage());
         }
-
     }
+
+
+    @Override
+    public Response<?> uploadProfilePictureToS3(MultipartFile file){
+        log.info("Inside uploadProfilePicture");
+        User user = getCurrentLoggedInUser();
+        try{
+            if(user.getProfilePictureUrl() != null && !user.getProfilePictureUrl().isEmpty()){
+                s3Service.deleteFile(user.getProfilePictureUrl());
+            }
+            String s3Url = s3Service.uploadFile(file, "profile-picture");
+
+            log.info("profile url is : {}",s3Url);
+
+            user.setProfilePictureUrl(s3Url);
+            userRepo.save(user);
+
+            return Response.builder()
+                    .statusCode(HttpStatus.OK.value())
+                    .data(s3Url)
+                    .build();
+
+        }catch (IOException e){
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
 }
