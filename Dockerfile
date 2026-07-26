@@ -6,8 +6,7 @@ WORKDIR /app
 
 #Install the Apache Maven build tool
 #Update package lists and install Maven without recommended package to keep the layer small
-RUN apt-get update && apt-get install -y --no-install-recommend maven && re -rf /var/lib/apt/lists/*
-
+RUN apt-get update && apt-get install -y --no-install-recommends maven && rm -rf /var/lib/apt/lists/*
 #Copy the Project Object Model (POM) file from the host to the container's WORKDIR (/app).
 COPY pom.xml .
 
