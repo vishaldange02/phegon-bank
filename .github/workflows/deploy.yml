@@ -20,6 +20,6 @@ jobs:
           username: ec2-user
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /home/ec2-user/phegon-bank
+            cd /home/ec2-user/projects/phegon-bank
             git pull origin main
             docker compose up --build -d
